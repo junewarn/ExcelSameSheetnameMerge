@@ -1,0 +1,89 @@
+import win.ui;
+import fsys.dlg;
+import com.excel;
+/*DSG{{*/
+var winform = win.form(text="aardio Form";right=323;bottom=273;parent=...)
+winform.add(
+checkbox={cls="checkbox";text="是否显示源文件";left=23;top=154;right=164;bottom=174;z=4};
+edit={cls="edit";left=17;top=10;right=308;bottom=142;edge=1;multiline=1;z=2};
+合并={cls="button";text="合并";left=197;top=214;right=308;bottom=250;z=3};
+打开={cls="button";text="打开";left=21;top=215;right=132;bottom=251;z=1}
+)
+/*}}*/
+
+winform.合并.oncommand = function(id,event){
+	var filesdata={}
+	var d=winform.edit.lineText(1)
+	var m=string.left(d,string.lastIndexAny(d,"\"))
+	var excel=com.excel()
+	//excel.Visible =true
+	var book=excel.Workbooks.Add()
+	for line in winform.edit.lines(true){
+		filesdata[line]={}
+		var excelobj=excel.Open(line)
+		var c=excelobj.Sheets.Count
+		for(i=1;c;1){
+			io.print(i)
+			var sheetobj=excelobj.Sheets.Item(i) 
+			var sheetname =sheetobj.Name
+			var booksheet,新表行
+			var trycreat=function(){
+				var err;
+				try{
+					book.Worksheets(sheetname)
+				}
+				catch(e){ 
+					err=e 
+				}
+				if(err===null){
+					booksheet=book.Worksheets(sheetname)
+					新表行=booksheet.UsedRange.Row+booksheet.UsedRange.Rows.Count-1
+					return {"booksheet":booksheet;"新表行":新表行};
+				}else {
+					booksheet=book.Worksheets.Add()
+					booksheet.Name=sheetname
+					新表行=0
+					return {"booksheet":booksheet;"新表行":新表行};
+				}
+			}
+			var result=trycreat()
+			booksheet=result["booksheet"];
+			var 列=sheetobj.UsedRange.Column+sheetobj.UsedRange.Columns.Count-1
+			var 行=sheetobj.UsedRange.Row+sheetobj.UsedRange.Rows.Count-1
+			新表行=result["新表行"]
+			for(j=1;行;1){
+				jj=新表行+j
+				var a=0
+				if(winform.checkbox.checked){
+					booksheet.cells(jj,1).Value2=line
+					a=1
+				}
+				for(k=1;列;1){
+					booksheet.cells(jj,k+a).setValue2(sheetobj.cells(j,k).getValue2())
+				}
+				
+			
+			}
+		}
+		
+	}
+	book.SaveAs(m++"合并工作表.xlsx")
+	excel.quit();
+}
+
+winform.打开.oncommand = function(id,event){
+	var selectfile=fsys.dlg.openEx("表格xls-xlsx-csv|*.xls;*.xlsx;*.csv")
+	var x=""
+	for(k,v in selectfile){
+		x=x++v++'\r\n';
+	}
+	
+    winform.edit.text = string.trim(x)
+}
+
+winform.checkbox.oncommand = function(id,event){
+	
+}
+
+winform.show()
+win.loopMessage();
